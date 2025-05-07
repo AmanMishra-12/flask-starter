@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'flask-student'
+        REPO_URL = 'https://github.com/AmanMishra-12/flask-starter.git' // Replace with your repository URL
+    }
+
+    stages {
+        stage('Check Access to Docker Daemon') {
+            steps {
+                script {
+                    sh 'docker ps'
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', 'url: https://github.com/AmanMishra-12/flask-starter'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
+            }
+        }
+
+        stage('Stop Previous Container') {
+            steps {
+                script {
+                    sh 'docker ps -q -f "ancestor=$DOCKER_IMAGE" | xargs -r docker stop'
+                }
+            }
+        }
+
+        stage('Run New Docker Container') {
+            steps {
+                script {
+                    sh 'docker run -d -p 5000:5000 $DOCKER_IMAGE'
+                }
+            }
+        }
+
+        stage('Post Actions') {
+            steps {
+                script {
+                    echo "Deployment Successful!"
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Deployment Failed!"
+        }
+    }
+}
+
